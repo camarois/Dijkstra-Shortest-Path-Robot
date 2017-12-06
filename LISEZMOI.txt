@@ -1,0 +1,29 @@
+Équipe #1521 "XxX_SLAC9000_XxX"
+> Jacob Dorais
+> Charles Marois
+> François-Xavier Legault
+> Jean-Sébastien Boulianne
+
+
+Ce projet final consiste à faire agir le robot comme une araignée. Celui-ci débutera 
+au centre de sa toile et devra repérer les insectes qu'il a capturés avec celle-ci.
+Dans un deuxième temps, il devra aller voir chacun d'eux. Puis finalement, le robot
+devra sortir de la toile.
+
+Le répertoire principal comporte les fichiers et dossiers suivants:
+
+Makefile_Common.txt : Makefile qui combine le code du robot et de la librairie
+
+exec_dir/  : contient les fichiers (projet.cpp et fichiers tests) du robot et son Makefile
+
+lib_dir/  : contient les fichiers (.cpp et .h) de la librairie "librobot" et son Makefile
+
+La librairie libpout contient plusieurs fonctions pratiques créées lors de travaux 
+précédents et lors de ce projet. Convertisseur analogique-numérique, PWM pour les 
+moteurs, le capteur de lignes et de distance et le piézoélectrique, écran LCD, 
+gestion de la mémoire, etc.
+
+Important! -> Compiler la librairie avant de compiler le code source du robot!
+
+Pour toute autre information concernant une fonction, se référer aux commentaires
+fournis dans le code et aux en-têtes.

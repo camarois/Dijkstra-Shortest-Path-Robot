@@ -1,0 +1,130 @@
+# Nom du microcontroleur cible
+# (exemple: 'at90s8515')
+MCU=atmega324pa
+
+# Nom de votre projet
+# (utilisez un seul mot, exemple: 'monprojet')
+PROJECTNAME=robot
+
+# Programmer ID - Ne pas changer 
+# Liste complete des IDs disponible avec avrdude
+AVRDUDE_PROGRAMMERID=usbasp
+
+# Optimization level,
+# use s (size opt), 1, 2, 3 or 0 (off)
+OPTLEVEL=s
+
+####### Options de compilation #######
+
+# Flags pour le compilateur en C
+CFLAGS=-I. $(INC) -g -mmcu=$(MCU) -O$(OPTLEVEL) \
+	-fpack-struct -fshort-enums             \
+	-funsigned-bitfields -funsigned-char    \
+	-Wall                                        \
+	-Wa,-ahlms=$(firstword                  \
+	$(filter %.lst, $(<:.c=.lst)))
+
+# Flags pour le compilateur en C++
+CPPFLAGS=-fno-exceptions -std=c++98    \
+	-Wa,-ahlms=$(firstword         \
+	$(filter %.lst, $(<:.cpp=.lst))\
+	$(filter %.lst, $(<:.cc=.lst)) \
+	$(filter %.lst, $(<:.C=.lst)))
+CPPFLAGS += -DF_CPU8000000UL
+
+# linker
+LDFLAGS=-Wl,-Map,$(TRG).map -mmcu=$(MCU)
+
+####### variables #######
+
+#compilateur utilise
+CC=avr-gcc
+AV=avr-ar
+#pour copier le contenu d'un fichier objet vers un autre
+OBJCOPY=avr-objcopy
+OBJDUMP=avr-objdump
+SIZE=avr-size
+#pour permettre le transfert vers le microcontroleur
+AVRDUDE=avrdude
+#pour supprimer les fichiers lorsque l'on appel make clean
+REMOVE=rm -f
+# HEXFORMAT -- format pour les fichiers produient .hex
+HEXFORMAT=ihex
+
+##### automatic target names ####
+DUMPTRG=$(PROJECTNAME).s
+
+HEXROMTRG=$(PROJECTNAME).hex
+HEXTRG=$(HEXROMTRG) $(PROJECTNAME).ee.hex
+
+# Definitions fichiers objets.
+
+#  C++
+CPPFILES=$(filter %.cpp, $(PRJSRC))
+CFILES=$(filter %.c, $(PRJSRC))
+
+# List all object files we need to create
+OBJDEPS=$(CFILES:.c=.o)    \
+	$(CPPFILES:.cpp=.o)\
+
+# Define all lst files.
+LST=$(filter %.lst, $(OBJDEPS:.o=.lst))
+
+.SUFFIXES : .c .cpp .o .out \
+	.hex .ee.hex .h
+
+####### Creation des commandes du Makefile ####### 
+
+# Make all permet simplement de compiler le projet
+.PHONY: writeflash clean stats gdbinit stats
+
+# all, hex, writeflash/install, clean
+all: $(TRG)
+
+hex: $(HEXROMTRG)
+
+# Make install permet de compiler le projet puis
+# d'ecrire le programme en memoire flash dans votre
+# microcontroleur. Celui-ci doit etre branche par cable USB
+writeflash: hex
+	$(AVRDUDE) -c $(AVRDUDE_PROGRAMMERID)   \
+	 -p $(MCU) -P $(AVRDUDE_PORT) -e        \
+	 -U flash:w:$(HEXROMTRG)
+
+install: writeflash
+
+$(DUMPTRG): $(TRG)
+	$(OBJDUMP) -S  $< > $@
+
+#### Fichiers objets ####
+# C à objet
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+
+# C++ à objet
+.cpp.o:
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
+
+.out.hex:
+	$(OBJCOPY) -j .text                    \
+		-j .data                       \
+		-O $(HEXFORMAT) $< $@
+
+.out.ee.hex:
+	$(OBJCOPY) -j .eeprom                  \
+		--change-section-lma .eeprom=0 \
+		-O $(HEXFORMAT) $< $@
+
+
+# Make clean permet d'effacer tout les fichiers generes
+# lors de la compilation
+clean:
+	$(REMOVE) $(TRG) $(TRG).map $(DUMPTRG)
+	$(REMOVE) $(OBJDEPS)
+	$(REMOVE) $(LST) #$(GDBINITFILE)
+	$(REMOVE) $(HEXTRG)
+
+
+#####                    EOF                   #####
+

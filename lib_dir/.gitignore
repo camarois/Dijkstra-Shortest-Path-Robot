@@ -1,0 +1,8 @@
+*.o
+*.lst
+*.out
+
+#vim swap files
+*.swp
+*.swo
+*.swn
